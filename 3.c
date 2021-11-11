@@ -1,110 +1,94 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include<stdio.h>
 #include<string.h>
-struct a {
-	int time;
-	char st[300];
-};
-void merge(struct a a[], int l, int m, int r)
-{
-	struct a L[1000], R[1000];
-	for (int i = 1; i <= (m - l + 1); i++)
-	{
-		L[i] = a[l + i - 1];
-	}
-	for (int i = 1; i <= (r - m); i++)
-	{
-		R[i] = a[m + i];
-	}
-	L[m - l + 2].time = 1000000000;
-	R[r - m + 1].time = 1000000000;
-	int i = 1, j = 1;
-	for (int k = l; k <= r; k++)
-	{
-		if (L[i].time < R[j].time)
-		{
-			a[k] = L[i];
-			i = i + 1;
-		}
-		else
-		{
-			a[k] = R[j];
-			j = j + 1;
-		}
-	}
-}
-void sort(struct a a[], int l, int r)
-{
-	if (l < r)
-	{
-		sort(a, l, (l + r) / 2);
-		sort(a, (l + r) / 2 + 1, r);
-	}
-	merge(a, l, (l + r) / 2, r);
-}
+#include<math.h>
 int main()
 {
-	FILE* f;
-	FILE* w;
-	w = fopen("0.txt", "w");
-	f = fopen("access_log_Jul95.txt", "r");
-	int b[6] = { 24 * 60 * 60,0,60 * 60,60,1 };
-	struct a a[1000];
-	int j = 0, s = 0;
-	while (fgets(a[j].st, 300, f) != NULL)
+	FILE* in = fopen("access_log_Jul95.txt", "r");
+	FILE* out = fopen("0.txt", "w");
+	int par, head = 0, tail = 0, m = 0, max = 0, sum = 0, output[2];
+	scanf("%d", &par);
+	int* steck = malloc(sizeof(int) * (par + 2));
+	int* steck2 = malloc(sizeof(int) * (par + 2));
+	int mu[] = { 24 * 60 * 60, 0, 60 * 60, 60, 1 };
+	char strl[300];
+	while (fgets(strl, 300, in) != NULL)
 	{
-		int i = 0, pr = 0, c = 0, d = 0, e = 0;
-		while (a[j].st[i] != '\0')
+		int i = 0, time = 0, pr = 0, t = 0, k = 0, ind = 0;
+		while (strl[i] != '\0')
 		{
-			if (a[j].st[i] == ' ')
+			if (strl[i] == ' ')
 			{
-				pr += 1;
+				pr++;
 			}
 			if (pr == 3)
 			{
-				if (a[j].st[i] >= 48 && a[j].st[i] <= 57)
+				if (strl[i] >= '0' && strl[i] <= '9')
 				{
-					if (a[j].st[i - 1] < 48 || a[j].st[i - 1] >57)
+					if (strl[i - 1] < '0' || strl[i - 1] > '9')
 					{
-						e += 1;
+						k++;
 					}
-					c = c * 10 + a[j].st[i] - 48;
+					t = t * 10 + strl[i] - 48;
 				}
 				else
 				{
-					d = d + c * b[e - 1];
-					c = 0;
+					time += t * mu[k - 1];
+					t = 0;
 				}
 			}
-			if (pr == 4)
+			if (strl[i] == '\"')
 			{
-				d += c;
-				c = 0;
+				ind = i;
 			}
-			if (a[j].st[i] == '\"')
+			i++;
+		}
+		if (strl[ind + 2] == '5')
+		{
+			sum = sum + 1;
+			fprintf(out, "%s", strl);
+		}
+		time += t;
+		if (time == 0)
+		{
+			continue;
+		}
+		if (tail != head && steck[(tail - 1 + par + 2) % (par + 2)] == time)
+		{
+			steck2[(tail - 1 + par + 2) % (par + 2)]++;
+		}
+		else
+		{
+			steck[tail] = time;
+			steck2[tail] = 1;
+			tail++;
+			tail %= (par + 2);
+		}
+		m++;
+		while (head != (tail - 1 + par + 2) % (par + 2))
+		{
+			if (steck[(tail - 1 + par + 2) % (par + 2)] - steck[head] > par)
 			{
-				c = i;
+				m -= steck2[head];
+				head++;
+				head %= (par + 2);
 			}
-			i += 1;
+			else
+			{
+				break;
+			}
 		}
-		a[j].time = d;
-		if (a[j].st[c+2] == '5')
+		if (max < m)
 		{
-			fprintf(w, "%s", a[j].st);
+			max = m;
+			output[0] = steck[head];
+			output[1] = steck[(tail - 1 + par + 2) % (par + 2)];
 		}
-		j++;
-		if (j == 1000)
-		{
-			j = 0;
-		}
-		s = s + 1;
 	}
-	sort(a, 0, j - 1);
-	printf("%d\n", j);
-	for (int i = 0; i < j; i++)
-	{
-		printf("%d %s", i, a[i].st);
-	}
-	printf("%d", s - 1);
+	fprintf(out, "\n%d", sum);
+	printf("%d\n", max);
+	printf("%d -- %d", output[0], output[1]);
+	free(steck);
+	free(steck2);
 	return 0;
 }
